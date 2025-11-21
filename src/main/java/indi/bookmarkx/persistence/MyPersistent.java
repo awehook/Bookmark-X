@@ -6,17 +6,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import indi.bookmarkx.model.po.BookmarkPO;
+import indi.bookmarkx.util.BookmarkXmlUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  * @author Nonoas
@@ -33,16 +27,9 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
     private BookmarkPO state;
 
     private final Project project;
-    
-    private JAXBContext jaxbContext;
 
     public MyPersistent(Project project) {
         this.project = project;
-        try {
-            jaxbContext = JAXBContext.newInstance(BookmarkPO.class);
-        } catch (JAXBException e) {
-            LOG.error("Failed to create JAXB context", e);
-        }
     }
 
     public static MyPersistent getInstance(Project project) {
@@ -91,15 +78,10 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
             return;
         }
         
-        try (FileReader reader = new FileReader(customFile)) {
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            BookmarkPO loadedState = (BookmarkPO) unmarshaller.unmarshal(reader);
-            if (loadedState != null) {
-                this.state = loadedState;
-                LOG.info("Loaded bookmarks from custom path: " + customPath);
-            }
-        } catch (JAXBException | IOException e) {
-            LOG.error("Failed to load bookmarks from custom path: " + customPath, e);
+        BookmarkPO loadedState = BookmarkXmlUtil.loadFromFile(customFile);
+        if (loadedState != null) {
+            this.state = loadedState;
+            LOG.info("Loaded bookmarks from custom path: " + customPath);
         }
     }
     
@@ -122,14 +104,9 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
             }
         }
         
-        try (FileWriter writer = new FileWriter(customFile)) {
-            Marshaller marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-            marshaller.marshal(state, writer);
+        boolean success = BookmarkXmlUtil.saveToFile(state, customFile);
+        if (success) {
             LOG.info("Saved bookmarks to custom path: " + customPath);
-        } catch (JAXBException | IOException e) {
-            LOG.error("Failed to save bookmarks to custom path: " + customPath, e);
         }
     }
 }
