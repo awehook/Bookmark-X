@@ -40,7 +40,7 @@ public final class BookmarkFlatExportAction extends AnAction {
     private Project project;
 
     public BookmarkFlatExportAction() {
-        super(() -> "平铺导出", () -> "导出为平铺格式（所有节点记录父UUID）", AllIcons.Actions.Download);
+        super(() -> I18N.get("bookmark.flatExport"), () -> I18N.get("bookmark.flatExport.desc"), AllIcons.Actions.Download);
     }
 
     @Override
@@ -159,7 +159,7 @@ public final class BookmarkFlatExportAction extends AnAction {
         String groupId = ToolWindowId.PROJECT_VIEW;
         Notification notification = new Notification(groupId,
                 I18N.get("bookmark.notification.title"),
-                "平铺导出成功: " + outputPath,
+                I18N.get("bookmark.flatExport.success", outputPath),
                 NotificationType.INFORMATION);
         Notifications.Bus.notify(notification, project);
     }
