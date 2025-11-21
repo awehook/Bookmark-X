@@ -111,7 +111,7 @@ public final class BookmarksManager {
         final BookmarkNodeModel finalBookmarkNodeModel = bookmarkNodeModel;
         final boolean addFlag = add;
         new BookmarkCreatorDialog(project, I18N.get("bookmark.create.title"))
-                .defaultName(defaultName)
+                .defaultName(defaultName+"::"+defaultDesc)
                 .defaultDesc(defaultDesc)
                 .showAndCallback((name, desc) -> {
                     finalBookmarkNodeModel.setName(name);
