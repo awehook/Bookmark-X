@@ -15,6 +15,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import indi.bookmarkx.common.I18N;
 import indi.bookmarkx.model.po.BookmarkPO;
 import indi.bookmarkx.persistence.MyPersistent;
+import indi.bookmarkx.persistence.MySettings;
+import indi.bookmarkx.ui.dialog.ExportPathSelectionDialog;
 import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,9 +56,44 @@ public final class BookmarkFlatExportAction extends AnAction {
         BookmarkPO copy = deepCopy(state, BookmarkPO.class);
         stateTranslate(copy);
         
-        // 转换为平铺格式并保存
+        // 转换为平铺格式
         List<BookmarkPO> flatList = flattenBookmarks(copy);
-        saveToJsonFile(flatList);
+        
+        // 获取历史路径和默认路径
+        MySettings settings = MySettings.getInstance();
+        List<String> historyPaths = settings.getFlatImportHistoryPaths();
+        String projectDir = FileUtil.toSystemIndependentName(Objects.requireNonNull(project.getBasePath()));
+        String defaultPath = projectDir + File.separator + "Bookmark_X_Flat.json";
+        
+        // 如果历史路径为空，直接导出到默认位置
+        if (historyPaths == null || historyPaths.isEmpty()) {
+            saveToJsonFile(flatList, defaultPath);
+            settings.addFlatImportHistoryPath(defaultPath);
+            return;
+        }
+        
+        // 显示路径选择对话框
+        ExportPathSelectionDialog dialog = new ExportPathSelectionDialog(project, historyPaths, defaultPath);
+        if (!dialog.showAndGet()) {
+            return;
+        }
+        
+        String selectedPath = dialog.getSelectedPath();
+        if (selectedPath == null || selectedPath.trim().isEmpty()) {
+            return;
+        }
+        
+        // 如果选择的是目录，则添加文件名
+        File file = new File(selectedPath);
+        if (file.isDirectory()) {
+            selectedPath = selectedPath + File.separator + "Bookmark_X_Flat.json";
+        } else if (!selectedPath.endsWith(".json")) {
+            selectedPath = selectedPath + File.separator + "Bookmark_X_Flat.json";
+        }
+        
+        // 保存文件并添加到历史记录
+        saveToJsonFile(flatList, selectedPath);
+        settings.addFlatImportHistoryPath(selectedPath);
     }
 
     /**
@@ -107,11 +144,9 @@ public final class BookmarkFlatExportAction extends AnAction {
     /**
      * 保存为JSON文件
      * @param flatList 平铺后的节点列表
+     * @param outputPath 输出文件路径
      */
-    private void saveToJsonFile(List<BookmarkPO> flatList) {
-        String projectDir = FileUtil.toSystemIndependentName(Objects.requireNonNull(project.getBasePath()));
-        String outputPath = projectDir + File.separator + "Bookmark_X_Flat.json";
-        
+    private void saveToJsonFile(List<BookmarkPO> flatList, String outputPath) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter fw = new FileWriter(outputPath)) {
             gson.toJson(flatList, fw);
