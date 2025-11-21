@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 插件持久化服务
@@ -60,10 +62,32 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         state.tipDelay = tipDelay;
     }
 
+    public List<String> getFlatImportHistoryPaths() {
+        if (state.flatImportHistoryPaths == null) {
+            state.flatImportHistoryPaths = new ArrayList<>();
+        }
+        return state.flatImportHistoryPaths;
+    }
+
+    public void addFlatImportHistoryPath(String path) {
+        if (state.flatImportHistoryPaths == null) {
+            state.flatImportHistoryPaths = new ArrayList<>();
+        }
+        // 如果路径已存在，先移除（保证最新的在最前面）
+        state.flatImportHistoryPaths.remove(path);
+        // 添加到列表开头
+        state.flatImportHistoryPaths.add(0, path);
+        // 最多保留10条历史记录
+        if (state.flatImportHistoryPaths.size() > 10) {
+            state.flatImportHistoryPaths = state.flatImportHistoryPaths.subList(0, 10);
+        }
+    }
+
     @XmlRootElement
     public static class State {
         public String language;
         public int tipDelay;
+        public List<String> flatImportHistoryPaths = new ArrayList<>();
     }
 
 }
