@@ -239,6 +239,12 @@ public final class BookmarksManager {
         private void reIntiFileMarksCache(BookmarkTreeNode root) {
             List<BookmarkNodeModel> bookmarkNodeModels = PersistenceUtil.treeToList(root);
             FileMarksCache fileMarksCache = bookmarksManager.getFileMarksCache();
+            
+            // 在清空缓存前，先释放所有旧书签的Gutter图标
+            fileMarksCache.getCache().values().forEach(bookmarkSet -> {
+                bookmarkSet.forEach(BookmarkNodeModel::release);
+            });
+            
             fileMarksCache.clear();
             for (BookmarkNodeModel model : bookmarkNodeModels) {
                 OpenFileDescriptor openFileDescriptor = model.getOpenFileDescriptor();
