@@ -66,12 +66,9 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         if (state.flatImportHistoryPaths == null) {
             state.flatImportHistoryPaths = new ArrayList<>();
         }
-        // 统一将路径分隔符转换为 /（处理旧数据）
-        List<String> normalizedPaths = new ArrayList<>();
-        for (String path : state.flatImportHistoryPaths) {
-            normalizedPaths.add(path.replace("\\", "/"));
-        }
-        return normalizedPaths;
+        // 统一将路径分隔符转换为 /（处理旧数据并更新state）
+        normalizeAllPaths();
+        return new ArrayList<>(state.flatImportHistoryPaths);
     }
 
     public void addFlatImportHistoryPath(String path) {
@@ -86,7 +83,7 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         state.flatImportHistoryPaths.add(0, normalizedPath);
         // 最多保留10条历史记录
         if (state.flatImportHistoryPaths.size() > 10) {
-            state.flatImportHistoryPaths = state.flatImportHistoryPaths.subList(0, 10);
+            state.flatImportHistoryPaths = new ArrayList<>(state.flatImportHistoryPaths.subList(0, 10));
         }
     }
 
@@ -99,14 +96,34 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         if (state.flatImportHistoryPaths == null) {
             return;
         }
-        // 统一将路径分隔符转换为 /
-        String normalizedPath = path.replace("\\", "/");
-        boolean removed = state.flatImportHistoryPaths.remove(normalizedPath);
+        // 先规范化所有路径
+        normalizeAllPaths();
         
-        // 如果成功删除，触发状态变更以确保持久化
-        if (removed) {
-            // 创建新的列表实例以触发状态变更
-            state.flatImportHistoryPaths = new ArrayList<>(state.flatImportHistoryPaths);
+        // 统一将要删除的路径分隔符转换为 /
+        String normalizedPath = path.replace("\\", "/");
+        
+        // 从列表中删除
+        state.flatImportHistoryPaths.remove(normalizedPath);
+    }
+    
+    /**
+     * 规范化所有历史路径，将反斜杠统一转换为正斜杠
+     */
+    private void normalizeAllPaths() {
+        if (state.flatImportHistoryPaths == null) {
+            return;
+        }
+        boolean needsUpdate = false;
+        List<String> normalizedPaths = new ArrayList<>();
+        for (String path : state.flatImportHistoryPaths) {
+            String normalizedPath = path.replace("\\", "/");
+            normalizedPaths.add(normalizedPath);
+            if (!path.equals(normalizedPath)) {
+                needsUpdate = true;
+            }
+        }
+        if (needsUpdate) {
+            state.flatImportHistoryPaths = normalizedPaths;
         }
     }
 
