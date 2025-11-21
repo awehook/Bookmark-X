@@ -32,12 +32,14 @@
                     factoryClass="indi.bookmarkx.RootWindowFactory" secondary="true"/>
 
         <projectService serviceImplementation="indi.bookmarkx.persistence.MyPersistent"/>
+        <projectService serviceImplementation="indi.bookmarkx.persistence.ProjectSettings"/>
 
         <editor.linePainter implementation="indi.bookmarkx.ui.painter.LineEndPainter"/>
 
         <editorFactoryDocumentListener implementation="indi.bookmarkx.global.BookmarkDocumentListener"/>
 
         <applicationConfigurable instance="indi.bookmarkx.MySettingsConfigurable"/>
+        <projectConfigurable instance="indi.bookmarkx.ProjectSettingsConfigurable"/>
 
 
     </extensions>

@@ -127,24 +127,11 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         }
     }
 
-    public String getCustomStoragePath() {
-        return state.customStoragePath;
-    }
-
-    public void setCustomStoragePath(String customStoragePath) {
-        this.state.customStoragePath = customStoragePath;
-    }
-
     @XmlRootElement
     public static class State {
         public String language;
         public int tipDelay;
         public List<String> flatImportHistoryPaths = new ArrayList<>();
-        /**
-         * 自定义书签存储路径（完整文件路径，包含文件名）
-         * 如果为空，则使用默认路径 .idea/SuperBookmarkState.xml
-         */
-        public String customStoragePath;
     }
 
 }

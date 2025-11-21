@@ -1,9 +1,6 @@
 package indi.bookmarkx.ui;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -32,7 +29,6 @@ public class MySettingsPanel extends JBPanel<MySettingsPanel> {
     private final ComboBox<I18NEnum> languageComboBox;
     private final JBCheckBox showTipCheckBox = new JBCheckBox(I18N.get("setting.tipToggle"), true);
     private final JBTextField jtfDelay = new JBTextField();
-    private final TextFieldWithBrowseButton customStoragePathField = new TextFieldWithBrowseButton();
 
     public MySettingsPanel() {
         MySettings settings = MySettings.getInstance();
@@ -80,33 +76,8 @@ public class MySettingsPanel extends JBPanel<MySettingsPanel> {
         delayPanel.add(new JBLabel("ms"));
         add(delayPanel, gbc);
 
-        // 添加自定义存储路径配置
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.gridwidth = 2;
-        JPanel storagePathPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        storagePathPanel.add(new JBLabel(I18N.get("setting.customStoragePath")));
-        
-        // 配置文件选择器
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("xml");
-        descriptor.setTitle(I18N.get("setting.customStoragePath.choose"));
-        descriptor.setDescription(I18N.get("setting.customStoragePath.desc"));
-        customStoragePathField.addBrowseFolderListener(
-                I18N.get("setting.customStoragePath.choose"),
-                I18N.get("setting.customStoragePath.desc"),
-                null,
-                descriptor
-        );
-        
-        // 设置当前值
-        String currentPath = settings.getCustomStoragePath();
-        if (StringUtils.isNotBlank(currentPath)) {
-            customStoragePathField.setText(currentPath);
-        }
-        
-        storagePathPanel.add(customStoragePathField);
-        add(storagePathPanel, gbc);
-
         gbc.weighty = 1;
         add(Box.createVerticalStrut(10), gbc);
     }
@@ -133,14 +104,4 @@ public class MySettingsPanel extends JBPanel<MySettingsPanel> {
         }
         return Integer.parseInt(delay);
     }
-
-    public String getCustomStoragePath() {
-        String path = customStoragePathField.getText();
-        return StringUtils.isBlank(path) ? null : path.trim();
-    }
-
-    public void setCustomStoragePath(String path) {
-        customStoragePathField.setText(path == null ? "" : path);
-    }
-
 }

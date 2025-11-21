@@ -41,22 +41,7 @@ public class MySettingsConfigurable implements Configurable {
     public boolean isModified() {
         MySettings settings = MySettings.getInstance();
         return isLanguageChanged() 
-                || settingsComponent.getTipDelay() != settings.getTipDelay()
-                || isCustomStoragePathChanged();
-    }
-    
-    private boolean isCustomStoragePathChanged() {
-        MySettings settings = MySettings.getInstance();
-        String currentPath = settings.getCustomStoragePath();
-        String newPath = settingsComponent.getCustomStoragePath();
-        
-        if (currentPath == null && newPath == null) {
-            return false;
-        }
-        if (currentPath == null || newPath == null) {
-            return true;
-        }
-        return !currentPath.equals(newPath);
+                || settingsComponent.getTipDelay() != settings.getTipDelay();
     }
 
     private boolean isLanguageChanged() {
@@ -67,14 +52,12 @@ public class MySettingsConfigurable implements Configurable {
     @Override
     public void apply() {
         boolean languageChanged = isLanguageChanged();
-        boolean storagePathChanged = isCustomStoragePathChanged();
         
         MySettings settings = MySettings.getInstance();
         settings.setLanguage(settingsComponent.getLanguage());
         settings.setTipDelay(settingsComponent.getTipDelay());
-        settings.setCustomStoragePath(settingsComponent.getCustomStoragePath());
 
-        if (languageChanged || storagePathChanged) {
+        if (languageChanged) {
             showRestartDialog();
         }
     }
@@ -83,7 +66,6 @@ public class MySettingsConfigurable implements Configurable {
     public void reset() {
         MySettings settings = MySettings.getInstance();
         settingsComponent.setLanguage(settings.getLanguage());
-        settingsComponent.setCustomStoragePath(settings.getCustomStoragePath());
     }
 
     @Override

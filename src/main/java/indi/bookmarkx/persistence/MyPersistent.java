@@ -67,7 +67,7 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
      * 如果配置了自定义路径，从自定义路径加载书签数据
      */
     private void loadFromCustomPathIfConfigured() {
-        String customPath = MySettings.getInstance().getCustomStoragePath();
+        String customPath = ProjectSettings.getInstance(project).getCustomStoragePath();
         if (StringUtils.isBlank(customPath)) {
             return;
         }
@@ -89,7 +89,7 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
      * 如果配置了自定义路径，保存书签数据到自定义路径
      */
     private void saveToCustomPathIfConfigured() {
-        String customPath = MySettings.getInstance().getCustomStoragePath();
+        String customPath = ProjectSettings.getInstance(project).getCustomStoragePath();
         if (StringUtils.isBlank(customPath) || state == null) {
             return;
         }
