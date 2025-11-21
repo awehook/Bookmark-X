@@ -78,7 +78,7 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
             return;
         }
         
-        BookmarkPO loadedState = BookmarkXmlUtil.loadFromFile(customFile);
+        BookmarkPO loadedState = BookmarkXmlUtil.loadFromFile(customFile, project);
         if (loadedState != null) {
             this.state = loadedState;
             LOG.info("Loaded bookmarks from custom path: " + customPath);
@@ -104,7 +104,7 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
             }
         }
         
-        boolean success = BookmarkXmlUtil.saveToFile(state, customFile);
+        boolean success = BookmarkXmlUtil.saveToFile(state, customFile, project);
         if (success) {
             LOG.info("Saved bookmarks to custom path: " + customPath);
         }

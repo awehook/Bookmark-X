@@ -1,6 +1,7 @@
 package indi.bookmarkx.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializer;
 import indi.bookmarkx.model.po.BookmarkPO;
 import org.jdom.Document;
@@ -28,9 +29,10 @@ public class BookmarkXmlUtil {
      * 从IntelliJ格式的XML文件中加载BookmarkPO对象
      * 
      * @param file XML文件
+     * @param project 项目对象，用于路径宏展开
      * @return BookmarkPO对象，如果加载失败返回null
      */
-    public static BookmarkPO loadFromFile(File file) {
+    public static BookmarkPO loadFromFile(File file, Project project) {
         if (file == null || !file.exists()) {
             LOG.warn("File does not exist: " + (file != null ? file.getAbsolutePath() : "null"));
             return null;
@@ -59,6 +61,15 @@ public class BookmarkXmlUtil {
                 return null;
             }
             
+            // 展开路径宏（$PROJECT_DIR$ -> 实际路径）
+            if (project != null) {
+                try {
+                    expandPathMacros(componentElement, project);
+                } catch (Exception e) {
+                    LOG.warn("Failed to expand path macros, continuing anyway", e);
+                }
+            }
+            
             // 使用IntelliJ的XmlSerializer反序列化
             BookmarkPO bookmarkPO = XmlSerializer.deserialize(componentElement, BookmarkPO.class);
             
@@ -81,9 +92,10 @@ public class BookmarkXmlUtil {
      * 
      * @param bookmarkPO BookmarkPO对象
      * @param file 目标文件
+     * @param project 项目对象，用于路径宏折叠
      * @return 是否保存成功
      */
-    public static boolean saveToFile(BookmarkPO bookmarkPO, File file) {
+    public static boolean saveToFile(BookmarkPO bookmarkPO, File file, Project project) {
         if (bookmarkPO == null || file == null) {
             LOG.warn("Invalid parameters: bookmarkPO or file is null");
             return false;
@@ -102,6 +114,15 @@ public class BookmarkXmlUtil {
             // 使用IntelliJ的XmlSerializer序列化BookmarkPO
             Element componentElement = XmlSerializer.serialize(bookmarkPO);
             componentElement.setAttribute("name", COMPONENT_NAME);
+            
+            // 折叠路径宏（实际路径 -> $PROJECT_DIR$）
+            if (project != null) {
+                try {
+                    collapsePathMacros(componentElement, project);
+                } catch (Exception e) {
+                    LOG.warn("Failed to collapse path macros, continuing anyway", e);
+                }
+            }
             
             // 创建IntelliJ格式的XML文档结构
             Element projectElement = new Element("project");
@@ -127,6 +148,78 @@ public class BookmarkXmlUtil {
         } catch (Exception e) {
             LOG.error("Failed to save bookmarks to file: " + file.getAbsolutePath(), e);
             return false;
+        }
+    }
+    
+    /**
+     * 展开路径宏（$PROJECT_DIR$ -> 实际路径）
+     * 
+     * @param element XML元素
+     * @param project 项目对象
+     */
+    private static void expandPathMacros(Element element, Project project) {
+        if (element == null || project == null) {
+            return;
+        }
+        
+        String projectPath = project.getBasePath();
+        if (projectPath == null) {
+            return;
+        }
+        
+        // 处理当前元素的属性
+        String value = element.getAttributeValue("value");
+        if (value != null && value.contains("$PROJECT_DIR$")) {
+            String expandedValue = value.replace("$PROJECT_DIR$", projectPath);
+            element.setAttribute("value", expandedValue);
+            LOG.debug("Expanded path macro: " + value + " -> " + expandedValue);
+        }
+        
+        // 递归处理子元素
+        for (Object child : element.getChildren()) {
+            if (child instanceof Element) {
+                expandPathMacros((Element) child, project);
+            }
+        }
+    }
+    
+    /**
+     * 折叠路径宏（实际路径 -> $PROJECT_DIR$）
+     * 
+     * @param element XML元素
+     * @param project 项目对象
+     */
+    private static void collapsePathMacros(Element element, Project project) {
+        if (element == null || project == null) {
+            return;
+        }
+        
+        String projectPath = project.getBasePath();
+        if (projectPath == null) {
+            return;
+        }
+        
+        // 规范化项目路径（统一使用正斜杠）
+        String normalizedProjectPath = projectPath.replace("\\", "/");
+        
+        // 处理当前元素的属性
+        String value = element.getAttributeValue("value");
+        if (value != null && value.contains(normalizedProjectPath)) {
+            String collapsedValue = value.replace(normalizedProjectPath, "$PROJECT_DIR$");
+            element.setAttribute("value", collapsedValue);
+            LOG.debug("Collapsed path macro: " + value + " -> " + collapsedValue);
+        } else if (value != null && value.contains(projectPath)) {
+            // 处理反斜杠路径
+            String collapsedValue = value.replace(projectPath, "$PROJECT_DIR$");
+            element.setAttribute("value", collapsedValue);
+            LOG.debug("Collapsed path macro: " + value + " -> " + collapsedValue);
+        }
+        
+        // 递归处理子元素
+        for (Object child : element.getChildren()) {
+            if (child instanceof Element) {
+                collapsePathMacros((Element) child, project);
+            }
         }
     }
 }
