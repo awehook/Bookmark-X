@@ -83,13 +83,8 @@ public final class BookmarkFlatExportAction extends AnAction {
             return;
         }
         
-        // 如果选择的是目录，则添加文件名
-        File file = new File(selectedPath);
-        if (file.isDirectory()) {
-            selectedPath = selectedPath + File.separator + "Bookmark_X_Flat.json";
-        } else if (!selectedPath.endsWith(".json")) {
-            selectedPath = selectedPath + File.separator + "Bookmark_X_Flat.json";
-        }
+        // 统一路径分隔符为 /
+        selectedPath = selectedPath.replace("\\", "/");
         
         // 保存文件并添加到历史记录
         saveToJsonFile(flatList, selectedPath);

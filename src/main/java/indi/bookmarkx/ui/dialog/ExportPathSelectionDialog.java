@@ -55,25 +55,26 @@ public class ExportPathSelectionDialog extends DialogWrapper {
             for (String path : historyPaths) {
                 // 统一显示为 / 分隔符
                 String normalizedPath = path.replace("\\", "/");
-                // 只显示目录路径
-                File file = new File(normalizedPath);
-                String dirPath = file.getParent();
-                if (dirPath != null) {
-                    // 目录路径也统一为 / 分隔符
-                    String normalizedDirPath = dirPath.replace("\\", "/");
-                    if (!listModel.contains(normalizedDirPath)) {
-                        listModel.addElement(normalizedDirPath);
-                    }
+                
+                // 去重添加完整路径到列表
+                if (!normalizedPath.isEmpty() && !listModel.contains(normalizedPath)) {
+                    listModel.addElement(normalizedPath);
                 }
             }
-            pathList = new JBList<>(listModel);
-            pathList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            
+            // 只有当列表不为空时才创建列表组件
             if (listModel.size() > 0) {
+                pathList = new JBList<>(listModel);
+                pathList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 pathList.setSelectedIndex(0);
-            }
 
-            JBScrollPane scrollPane = new JBScrollPane(pathList);
-            panel.add(scrollPane, BorderLayout.CENTER);
+                JBScrollPane scrollPane = new JBScrollPane(pathList);
+                panel.add(scrollPane, BorderLayout.CENTER);
+            } else {
+                JLabel emptyLabel = new JLabel(I18N.get("bookmark.flatExport.selectPath.empty"));
+                emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                panel.add(emptyLabel, BorderLayout.CENTER);
+            }
         } else {
             JLabel emptyLabel = new JLabel(I18N.get("bookmark.flatExport.selectPath.empty"));
             emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -104,18 +105,29 @@ public class ExportPathSelectionDialog extends DialogWrapper {
 
     private void browseForDirectory() {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(
-                false,
-                true,  // 只选择目录
+                true,   // 允许选择文件
+                true,   // 允许选择目录
                 false,
                 false,
                 false,
                 false);
         descriptor.setTitle(I18N.get("bookmark.flatExport.selectPath.browse"));
+        descriptor.withFileFilter(file -> file.isDirectory() || file.getName().endsWith(".json"));
 
         VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
         if (virtualFile != null) {
             // 统一将路径分隔符转换为 /
-            selectedPath = virtualFile.getPath().replace("\\", "/");
+            String path = virtualFile.getPath().replace("\\", "/");
+            
+            // 如果选择的是目录，添加默认文件名
+            if (virtualFile.isDirectory()) {
+                if (!path.endsWith("/")) {
+                    path += "/";
+                }
+                path += "Bookmark_X_Flat.json";
+            }
+            
+            selectedPath = path;
             useDefaultPath = false;
             close(OK_EXIT_CODE);
         }
