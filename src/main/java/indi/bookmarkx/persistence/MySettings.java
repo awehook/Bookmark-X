@@ -90,6 +90,26 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         }
     }
 
+    /**
+     * 删除指定的历史路径
+     *
+     * @param path 要删除的路径
+     */
+    public void removeFlatImportHistoryPath(String path) {
+        if (state.flatImportHistoryPaths == null) {
+            return;
+        }
+        // 统一将路径分隔符转换为 /
+        String normalizedPath = path.replace("\\", "/");
+        boolean removed = state.flatImportHistoryPaths.remove(normalizedPath);
+        
+        // 如果成功删除，触发状态变更以确保持久化
+        if (removed) {
+            // 创建新的列表实例以触发状态变更
+            state.flatImportHistoryPaths = new ArrayList<>(state.flatImportHistoryPaths);
+        }
+    }
+
     @XmlRootElement
     public static class State {
         public String language;

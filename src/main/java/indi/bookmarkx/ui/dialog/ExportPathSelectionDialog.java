@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import indi.bookmarkx.common.I18N;
+import indi.bookmarkx.persistence.MySettings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ public class ExportPathSelectionDialog extends DialogWrapper {
     private final List<String> historyPaths;
     private final String defaultPath;
     private JBList<String> pathList;
+    private DefaultListModel<String> listModel;
     private String selectedPath;
     private boolean useDefaultPath = false;
 
@@ -51,7 +53,7 @@ public class ExportPathSelectionDialog extends DialogWrapper {
 
         // 历史路径列表
         if (historyPaths != null && !historyPaths.isEmpty()) {
-            DefaultListModel<String> listModel = new DefaultListModel<>();
+            listModel = new DefaultListModel<>();
             for (String path : historyPaths) {
                 // 统一显示为 / 分隔符
                 String normalizedPath = path.replace("\\", "/");
@@ -83,6 +85,12 @@ public class ExportPathSelectionDialog extends DialogWrapper {
 
         // 按钮面板
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        // 删除按钮
+        JButton removeButton = new JButton(I18N.get("bookmark.flatExport.selectPath.remove"));
+        removeButton.addActionListener(e -> removeSelectedPath());
+        removeButton.setEnabled(pathList != null && listModel != null && !listModel.isEmpty());
+        buttonPanel.add(removeButton);
         
         // 默认位置按钮
         JButton defaultButton = new JButton(I18N.get("bookmark.flatExport.selectPath.useDefault"));
@@ -144,6 +152,29 @@ public class ExportPathSelectionDialog extends DialogWrapper {
 
     public String getSelectedPath() {
         return selectedPath;
+    }
+
+    /**
+     * 删除选中的历史路径
+     */
+    private void removeSelectedPath() {
+        if (pathList == null || listModel == null) {
+            return;
+        }
+        
+        String selectedValue = pathList.getSelectedValue();
+        if (selectedValue != null) {
+            // 从设置中删除
+            MySettings.getInstance().removeFlatImportHistoryPath(selectedValue);
+            
+            // 从列表模型中删除
+            listModel.removeElement(selectedValue);
+            
+            // 如果列表不为空，选择第一项
+            if (!listModel.isEmpty()) {
+                pathList.setSelectedIndex(0);
+            }
+        }
     }
 
     public boolean isUseDefaultPath() {

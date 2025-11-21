@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import indi.bookmarkx.common.I18N;
+import indi.bookmarkx.persistence.MySettings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ public class PathSelectionDialog extends DialogWrapper {
     private final Project project;
     private final List<String> historyPaths;
     private JBList<String> pathList;
+    private DefaultListModel<String> listModel;
     private String selectedPath;
 
     public PathSelectionDialog(Project project, List<String> historyPaths) {
@@ -48,7 +50,7 @@ public class PathSelectionDialog extends DialogWrapper {
 
         // 历史路径列表
         if (historyPaths != null && !historyPaths.isEmpty()) {
-            DefaultListModel<String> listModel = new DefaultListModel<>();
+            listModel = new DefaultListModel<>();
             for (String path : historyPaths) {
                 // 统一显示为 / 分隔符
                 listModel.addElement(path.replace("\\", "/"));
@@ -65,11 +67,20 @@ public class PathSelectionDialog extends DialogWrapper {
             panel.add(emptyLabel, BorderLayout.CENTER);
         }
 
+        // 按钮面板
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        // 删除按钮
+        JButton removeButton = new JButton(I18N.get("bookmark.flatImport.selectPath.remove"));
+        removeButton.addActionListener(e -> removeSelectedPath());
+        removeButton.setEnabled(pathList != null && listModel != null && !listModel.isEmpty());
+        buttonPanel.add(removeButton);
+        
         // 浏览按钮
         JButton browseButton = new JButton(I18N.get("bookmark.flatImport.selectPath.browse"));
         browseButton.addActionListener(e -> browseForFile());
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(browseButton);
+        
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
@@ -100,6 +111,29 @@ public class PathSelectionDialog extends DialogWrapper {
             selectedPath = pathList.getSelectedValue();
         }
         super.doOKAction();
+    }
+
+    /**
+     * 删除选中的历史路径
+     */
+    private void removeSelectedPath() {
+        if (pathList == null || listModel == null) {
+            return;
+        }
+        
+        String selectedValue = pathList.getSelectedValue();
+        if (selectedValue != null) {
+            // 从设置中删除
+            MySettings.getInstance().removeFlatImportHistoryPath(selectedValue);
+            
+            // 从列表模型中删除
+            listModel.removeElement(selectedValue);
+            
+            // 如果列表为空，选择第一项
+            if (!listModel.isEmpty()) {
+                pathList.setSelectedIndex(0);
+            }
+        }
     }
 
     public String getSelectedPath() {
