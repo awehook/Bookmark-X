@@ -66,7 +66,7 @@ public final class BookmarkFlatExportAction extends AnAction {
      */
     private List<BookmarkPO> flattenBookmarks(BookmarkPO root) {
         List<BookmarkPO> flatList = new ArrayList<>();
-        flattenBookmarksRecursive(root, null, flatList);
+        flattenBookmarksRecursive(root, null, null, flatList);
         return flatList;
     }
 
@@ -74,14 +74,17 @@ public final class BookmarkFlatExportAction extends AnAction {
      * 递归遍历树形结构，将所有节点平铺
      * @param node 当前节点
      * @param parentUuid 父节点UUID
+     * @param parentName 父节点名称
      * @param flatList 平铺列表
      */
-    private void flattenBookmarksRecursive(BookmarkPO node, String parentUuid, List<BookmarkPO> flatList) {
-        // 设置父节点UUID
+    private void flattenBookmarksRecursive(BookmarkPO node, String parentUuid, String parentName, List<BookmarkPO> flatList) {
+        // 设置父节点UUID和名称
         node.setParentUuid(parentUuid);
+        node.setParentName(parentName);
         
-        // 保存当前节点的UUID和children
+        // 保存当前节点的UUID、名称和children
         String currentUuid = node.getUuid();
+        String currentName = node.getName();
         List<BookmarkPO> children = node.getChildren() != null ? new ArrayList<>(node.getChildren()) : new ArrayList<>();
         
         // 清空children（平铺后不需要children）
@@ -96,7 +99,7 @@ public final class BookmarkFlatExportAction extends AnAction {
         // 递归处理子节点
         if (CollectionUtils.isNotEmpty(children)) {
             for (BookmarkPO child : children) {
-                flattenBookmarksRecursive(child, currentUuid, flatList);
+                flattenBookmarksRecursive(child, currentUuid, currentName, flatList);
             }
         }
     }
