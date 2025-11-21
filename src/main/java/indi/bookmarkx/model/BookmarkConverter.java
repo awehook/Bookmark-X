@@ -41,6 +41,7 @@ public class BookmarkConverter {
             GroupNodeModel nodeModel = (GroupNodeModel) model;
 
             BookmarkPO po = new BookmarkPO();
+            po.setUuid(nodeModel.getUuid());  // 让分组也保存uuid
             po.setName(nodeModel.getName());
             po.setDesc(nodeModel.getDesc());
             po.setBookmark(false);
@@ -73,6 +74,7 @@ public class BookmarkConverter {
             return model;
         } else {
             GroupNodeModel model = new GroupNodeModel();
+            model.setUuid(po.getUuid());  // 恢复分组的uuid
             model.setName(po.getName());
             model.setDesc(po.getDesc());
             return model;

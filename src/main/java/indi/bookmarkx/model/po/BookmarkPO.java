@@ -19,6 +19,11 @@ public class BookmarkPO {
 
     private String uuid;
 
+    /**
+     * 父节点UUID（用于平铺导出格式）
+     */
+    private String parentUuid;
+
     private int index;
     private int line;
 
@@ -67,6 +72,14 @@ public class BookmarkPO {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getParentUuid() {
+        return parentUuid;
+    }
+
+    public void setParentUuid(String parentUuid) {
+        this.parentUuid = parentUuid;
     }
 
     public String getName() {
