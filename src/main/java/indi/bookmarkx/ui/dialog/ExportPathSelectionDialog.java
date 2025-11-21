@@ -53,11 +53,17 @@ public class ExportPathSelectionDialog extends DialogWrapper {
         if (historyPaths != null && !historyPaths.isEmpty()) {
             DefaultListModel<String> listModel = new DefaultListModel<>();
             for (String path : historyPaths) {
+                // 统一显示为 / 分隔符
+                String normalizedPath = path.replace("\\", "/");
                 // 只显示目录路径
-                File file = new File(path);
+                File file = new File(normalizedPath);
                 String dirPath = file.getParent();
-                if (dirPath != null && !listModel.contains(dirPath)) {
-                    listModel.addElement(dirPath);
+                if (dirPath != null) {
+                    // 目录路径也统一为 / 分隔符
+                    String normalizedDirPath = dirPath.replace("\\", "/");
+                    if (!listModel.contains(normalizedDirPath)) {
+                        listModel.addElement(normalizedDirPath);
+                    }
                 }
             }
             pathList = new JBList<>(listModel);
@@ -108,7 +114,8 @@ public class ExportPathSelectionDialog extends DialogWrapper {
 
         VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
         if (virtualFile != null) {
-            selectedPath = virtualFile.getPath();
+            // 统一将路径分隔符转换为 /
+            selectedPath = virtualFile.getPath().replace("\\", "/");
             useDefaultPath = false;
             close(OK_EXIT_CODE);
         }

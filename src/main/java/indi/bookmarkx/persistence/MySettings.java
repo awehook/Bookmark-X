@@ -66,17 +66,24 @@ public final class MySettings implements PersistentStateComponent<MySettings.Sta
         if (state.flatImportHistoryPaths == null) {
             state.flatImportHistoryPaths = new ArrayList<>();
         }
-        return state.flatImportHistoryPaths;
+        // 统一将路径分隔符转换为 /（处理旧数据）
+        List<String> normalizedPaths = new ArrayList<>();
+        for (String path : state.flatImportHistoryPaths) {
+            normalizedPaths.add(path.replace("\\", "/"));
+        }
+        return normalizedPaths;
     }
 
     public void addFlatImportHistoryPath(String path) {
         if (state.flatImportHistoryPaths == null) {
             state.flatImportHistoryPaths = new ArrayList<>();
         }
+        // 统一将路径分隔符转换为 /
+        String normalizedPath = path.replace("\\", "/");
         // 如果路径已存在，先移除（保证最新的在最前面）
-        state.flatImportHistoryPaths.remove(path);
+        state.flatImportHistoryPaths.remove(normalizedPath);
         // 添加到列表开头
-        state.flatImportHistoryPaths.add(0, path);
+        state.flatImportHistoryPaths.add(0, normalizedPath);
         // 最多保留10条历史记录
         if (state.flatImportHistoryPaths.size() > 10) {
             state.flatImportHistoryPaths = state.flatImportHistoryPaths.subList(0, 10);

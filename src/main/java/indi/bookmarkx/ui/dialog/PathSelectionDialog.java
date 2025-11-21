@@ -50,7 +50,8 @@ public class PathSelectionDialog extends DialogWrapper {
         if (historyPaths != null && !historyPaths.isEmpty()) {
             DefaultListModel<String> listModel = new DefaultListModel<>();
             for (String path : historyPaths) {
-                listModel.addElement(path);
+                // 统一显示为 / 分隔符
+                listModel.addElement(path.replace("\\", "/"));
             }
             pathList = new JBList<>(listModel);
             pathList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -87,7 +88,8 @@ public class PathSelectionDialog extends DialogWrapper {
 
         VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
         if (virtualFile != null) {
-            selectedPath = virtualFile.getPath();
+            // 统一将路径分隔符转换为 /
+            selectedPath = virtualFile.getPath().replace("\\", "/");
             close(OK_EXIT_CODE);
         }
     }
