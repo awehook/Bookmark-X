@@ -4,6 +4,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import indi.bookmarkx.common.I18N;
+import indi.bookmarkx.persistence.MyPersistent;
 import indi.bookmarkx.persistence.ProjectSettings;
 import indi.bookmarkx.ui.ProjectSettingsPanel;
 import org.jetbrains.annotations.Nls;
@@ -68,6 +69,11 @@ public class ProjectSettingsConfigurable implements Configurable {
         settings.setCustomStoragePath(settingsComponent.getCustomStoragePath());
 
         if (storagePathChanged) {
+            // 重新启动文件监听器
+            MyPersistent persistent = MyPersistent.getInstance(project);
+            persistent.getFileWatcher().stopWatching();
+            persistent.getFileWatcher().startWatching();
+            
             showRestartDialog();
         }
     }

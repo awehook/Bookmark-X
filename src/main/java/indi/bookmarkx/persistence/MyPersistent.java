@@ -5,6 +5,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import indi.bookmarkx.global.BookmarkFileWatcher;
 import indi.bookmarkx.model.po.BookmarkPO;
 import indi.bookmarkx.util.BookmarkXmlUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -27,9 +28,15 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
     private BookmarkPO state;
 
     private final Project project;
+    
+    private final BookmarkFileWatcher fileWatcher;
 
     public MyPersistent(Project project) {
         this.project = project;
+        this.fileWatcher = new BookmarkFileWatcher(project);
+        
+        // 启动文件监听
+        fileWatcher.startWatching();
     }
 
     public static MyPersistent getInstance(Project project) {
@@ -104,9 +111,19 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
             }
         }
         
+        // 标记为内部修改，避免触发重新加载
+        fileWatcher.markInternalChange();
+        
         boolean success = BookmarkXmlUtil.saveToFile(state, customFile, project);
         if (success) {
             LOG.info("Saved bookmarks to custom path: " + customPath);
         }
+    }
+    
+    /**
+     * 获取文件监听器
+     */
+    public BookmarkFileWatcher getFileWatcher() {
+        return fileWatcher;
     }
 }
