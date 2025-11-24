@@ -2,20 +2,18 @@ package indi.bookmarkx.global;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.messages.MessageBusConnection;
 import indi.bookmarkx.BookmarksManager;
 import indi.bookmarkx.persistence.ProjectSettings;
 import indi.bookmarkx.util.LogCollector;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.List;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 书签配置文件监听器
@@ -29,10 +27,13 @@ public class BookmarkFileWatcher {
     private static final Logger LOG = Logger.getInstance(BookmarkFileWatcher.class);
 
     private final Project project;
-    private MessageBusConnection connection;
     private String watchedFilePath;
     private long lastModifiedTime = 0;
-    private boolean isInternalChange = false; // 标记是否为内部修改
+    private final AtomicBoolean isInternalChange = new AtomicBoolean(false); // 标记是否为内部修改
+    
+    private WatchService watchService;
+    private ExecutorService executorService;
+    private final AtomicBoolean isWatching = new AtomicBoolean(false);
 
     public BookmarkFileWatcher(Project project) {
         this.project = project;
@@ -52,7 +53,7 @@ public class BookmarkFileWatcher {
         }
 
         // 如果已经在监听同一个文件，不需要重新启动
-        if (customPath.equals(watchedFilePath) && connection != null) {
+        if (customPath.equals(watchedFilePath) && isWatching.get()) {
             String alreadyWatchingMsg = "[BookmarkFileWatcher] Already watching file: " + customPath;
             LOG.info(alreadyWatchingMsg);
             LogCollector.getInstance().info("BookmarkFileWatcher", project, alreadyWatchingMsg);
@@ -70,60 +71,131 @@ public class BookmarkFileWatcher {
             lastModifiedTime = file.lastModified();
         }
 
-        // 注册文件变化监听器
-        connection = project.getMessageBus().connect();
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-            @Override
-            public void after(@NotNull List<? extends VFileEvent> events) {
-                for (VFileEvent event : events) {
-                    if (event instanceof VFileContentChangeEvent) {
-                        handleFileChange((VFileContentChangeEvent) event);
-                    }
-                }
-            }
-        });
-
-        String startedMsg = "[BookmarkFileWatcher] Started watching bookmark file: " + customPath;
-        LOG.info(startedMsg);
-        LogCollector.getInstance().info("BookmarkFileWatcher", project, startedMsg);
+        try {
+            // 创建 WatchService
+            watchService = FileSystems.getDefault().newWatchService();
+            
+            // 获取文件所在目录
+            Path dirPath = Paths.get(file.getParent());
+            
+            // 注册目录监听（监听修改事件）
+            dirPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+            
+            // 创建线程池并启动监听线程
+            executorService = Executors.newSingleThreadExecutor(r -> {
+                Thread thread = new Thread(r, "BookmarkFileWatcher-" + project.getName());
+                thread.setDaemon(true);
+                return thread;
+            });
+            
+            isWatching.set(true);
+            
+            // 启动监听任务
+            executorService.submit(this::watchFileChanges);
+            
+            String startedMsg = "[BookmarkFileWatcher] Started watching bookmark file: " + customPath;
+            LOG.info(startedMsg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, startedMsg);
+            
+        } catch (IOException e) {
+            String errorMsg = "Failed to start file watcher for: " + customPath;
+            LOG.error(errorMsg, e);
+            LogCollector.getInstance().error("BookmarkFileWatcher", project, errorMsg, e);
+        }
     }
 
     /**
      * 停止文件监听
      */
     public void stopWatching() {
-        if (connection != null) {
-            connection.disconnect();
-            connection = null;
+        isWatching.set(false);
+        
+        if (executorService != null) {
+            executorService.shutdownNow();
+            try {
+                executorService.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            executorService = null;
+        }
+        
+        if (watchService != null) {
+            try {
+                watchService.close();
+            } catch (IOException e) {
+                LOG.warn("Error closing watch service", e);
+            }
+            watchService = null;
+        }
+        
+        if (watchedFilePath != null) {
             String msg = "Stopped watching bookmark file: " + watchedFilePath;
             LOG.info(msg);
             LogCollector.getInstance().info("BookmarkFileWatcher", project, msg);
         }
+        
         watchedFilePath = null;
+    }
+
+    /**
+     * 监听文件变化的主循环
+     */
+    private void watchFileChanges() {
+        String fileName = new File(watchedFilePath).getName();
+        
+        while (isWatching.get()) {
+            try {
+                WatchKey key = watchService.poll(1, TimeUnit.SECONDS);
+                if (key == null) {
+                    continue;
+                }
+                
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    
+                    if (kind == StandardWatchEventKinds.OVERFLOW) {
+                        continue;
+                    }
+                    
+                    @SuppressWarnings("unchecked")
+                    WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
+                    Path changedFile = pathEvent.context();
+                    
+                    // 检查是否是我们监听的文件
+                    if (changedFile.toString().equals(fileName)) {
+                        handleFileChange();
+                    }
+                }
+                
+                // 重置key，继续监听
+                boolean valid = key.reset();
+                if (!valid) {
+                    break;
+                }
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                LOG.error("Error in file watch loop", e);
+            }
+        }
     }
 
     /**
      * 处理文件变化事件
      */
-    private void handleFileChange(VFileContentChangeEvent event) {
+    private void handleFileChange() {
         if (watchedFilePath == null) {
             return;
         }
 
-        VirtualFile changedFile = event.getFile();
-        String changedPath = changedFile.getPath();
-
-        // 检查是否是我们监听的文件
-        if (!isSameFile(changedPath, watchedFilePath)) {
-            return;
-        }
-
         // 如果是内部修改，忽略
-        if (isInternalChange) {
+        if (isInternalChange.getAndSet(false)) {
             String ignoreMsg = "Ignoring internal change to bookmark file";
             LOG.info(ignoreMsg);
             LogCollector.getInstance().info("BookmarkFileWatcher", project, ignoreMsg);
-            isInternalChange = false;
             return;
         }
 
@@ -186,7 +258,7 @@ public class BookmarkFileWatcher {
      * 这样可以避免触发重新加载
      */
     public void markInternalChange() {
-        this.isInternalChange = true;
+        this.isInternalChange.set(true);
         
         // 更新最后修改时间
         if (watchedFilePath != null) {
@@ -208,6 +280,6 @@ public class BookmarkFileWatcher {
      * 检查是否正在监听文件
      */
     public boolean isWatching() {
-        return connection != null && watchedFilePath != null;
+        return isWatching.get() && watchedFilePath != null;
     }
 }
