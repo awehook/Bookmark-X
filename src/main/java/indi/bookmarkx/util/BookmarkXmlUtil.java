@@ -33,8 +33,12 @@ public class BookmarkXmlUtil {
      * @return BookmarkPO对象，如果加载失败返回null
      */
     public static BookmarkPO loadFromFile(File file, Project project) {
+        String msg; // 在方法级别声明，避免重复定义
+        
         if (file == null || !file.exists()) {
-            LOG.warn("File does not exist: " + (file != null ? file.getAbsolutePath() : "null"));
+            msg = "File does not exist: " + (file != null ? file.getAbsolutePath() : "null");
+            LOG.warn(msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", msg);
             return null;
         }
         
@@ -43,7 +47,9 @@ public class BookmarkXmlUtil {
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(file);
             Element rootElement = document.getRootElement();
-            LOG.info("Root element name: " + rootElement.getName());
+            msg = "Root element name: " + rootElement.getName();
+            LOG.info(msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", msg);
 
             // 查找component节点
             Element componentElement = null;
@@ -58,7 +64,9 @@ public class BookmarkXmlUtil {
             }
             
             if (componentElement == null) {
-                LOG.warn("No component element found with name: " + COMPONENT_NAME);
+                msg = "No component element found with name: " + COMPONENT_NAME;
+                LOG.warn(msg);
+                LogCollector.getInstance().info("BookmarkXmlUtil", msg);
                 return null;
             }
             
@@ -67,7 +75,9 @@ public class BookmarkXmlUtil {
                 try {
                     expandPathMacros(componentElement, project);
                 } catch (Exception e) {
-                    LOG.warn("Failed to expand path macros, continuing anyway", e);
+                    msg = "Failed to expand path macros, continuing anyway";
+                    LOG.warn(msg, e);
+                    LogCollector.getInstance().error("BookmarkXmlUtil", msg, e);
                 }
             }
             
@@ -75,15 +85,21 @@ public class BookmarkXmlUtil {
             BookmarkPO bookmarkPO = XmlSerializer.deserialize(componentElement, BookmarkPO.class);
             
             if (bookmarkPO == null) {
-                LOG.warn("Failed to deserialize BookmarkPO from file: " + file.getAbsolutePath());
+                msg = "Failed to deserialize BookmarkPO from file: " + file.getAbsolutePath();
+                LOG.warn(msg);
+                LogCollector.getInstance().info("BookmarkXmlUtil", msg);
                 return null;
             }
             
-            LOG.info("Successfully loaded bookmarks from: " + file.getAbsolutePath());
+            msg = "Successfully loaded bookmarks from: " + file.getAbsolutePath();
+            LOG.info(msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", msg);
             return bookmarkPO;
             
         } catch (Exception e) {
-            LOG.error("Failed to load bookmarks from file: " + file.getAbsolutePath(), e);
+            msg = "Failed to load bookmarks from file: " + file.getAbsolutePath();
+            LOG.error(msg, e);
+            LogCollector.getInstance().error("BookmarkXmlUtil", msg, e);
             return null;
         }
     }
@@ -97,8 +113,12 @@ public class BookmarkXmlUtil {
      * @return 是否保存成功
      */
     public static boolean saveToFile(BookmarkPO bookmarkPO, File file, Project project) {
+        String msg; // 在方法级别声明，避免重复定义
+        
         if (bookmarkPO == null || file == null) {
-            LOG.warn("Invalid parameters: bookmarkPO or file is null");
+            msg = "Invalid parameters: bookmarkPO or file is null";
+            LOG.warn(msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", msg);
             return false;
         }
         
@@ -107,7 +127,9 @@ public class BookmarkXmlUtil {
             File parentDir = file.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
                 if (!parentDir.mkdirs()) {
-                    LOG.error("Failed to create parent directory: " + parentDir.getAbsolutePath());
+                    msg = "Failed to create parent directory: " + parentDir.getAbsolutePath();
+                    LOG.error(msg);
+                    LogCollector.getInstance().error("BookmarkXmlUtil", msg);
                     return false;
                 }
             }
@@ -123,7 +145,9 @@ public class BookmarkXmlUtil {
                 try {
                     collapsePathMacros(componentElement, project);
                 } catch (Exception e) {
-                    LOG.warn("Failed to collapse path macros, continuing anyway", e);
+                    String collapseMsg = "Failed to collapse path macros, continuing anyway";
+                    LOG.warn(collapseMsg, e);
+                    LogCollector.getInstance().error("BookmarkXmlUtil", collapseMsg, e);
                 }
             }
             
@@ -145,11 +169,15 @@ public class BookmarkXmlUtil {
                 xmlOutputter.output(document, writer);
             }
             
-            LOG.info("Successfully saved bookmarks to: " + file.getAbsolutePath());
+            msg = "Successfully saved bookmarks to: " + file.getAbsolutePath();
+            LOG.info(msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", msg);
             return true;
             
         } catch (Exception e) {
-            LOG.error("Failed to save bookmarks to file: " + file.getAbsolutePath(), e);
+            msg = "Failed to save bookmarks to file: " + file.getAbsolutePath();
+            LOG.error(msg, e);
+            LogCollector.getInstance().error("BookmarkXmlUtil", msg, e);
             return false;
         }
     }
