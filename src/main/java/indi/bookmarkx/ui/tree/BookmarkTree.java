@@ -304,7 +304,7 @@ public class BookmarkTree extends Tree implements BookmarkListener {
 
     @Override
     public void setModel(TreeModel newModel) {
-        LogCollector.getInstance().trace("BookmarkTree", project, "setModel");
+        // LogCollector.getInstance().trace("BookmarkTree", project, "setModel");
         // 保存旧树的展开状态
         Set<String> expandedNodeUuids = saveExpandedState();
         
@@ -319,8 +319,8 @@ public class BookmarkTree extends Tree implements BookmarkListener {
         loadNodeCache((BookmarkTreeNode) root);
         super.setModel(model);
         
-        // 恢复展开状态
-        restoreExpandedState(expandedNodeUuids);
+        // 恢复展开状态 - 使用invokeLater确保在树完全渲染后执行
+        SwingUtilities.invokeLater(() -> restoreExpandedState(expandedNodeUuids));
     }
 
     /**

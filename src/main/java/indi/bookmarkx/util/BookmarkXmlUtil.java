@@ -51,7 +51,7 @@ public class BookmarkXmlUtil {
             Element rootElement = document.getRootElement();
             msg = "loadFromFile:" + file.getAbsolutePath();
             LOG.info(msg, new Throwable("Stack trace"));
-            LogCollector.getInstance().trace("BookmarkXmlUtil", project, msg);
+            LogCollector.getInstance().info("BookmarkXmlUtil", project, msg);
 
             // 查找component节点
             Element componentElement = null;
