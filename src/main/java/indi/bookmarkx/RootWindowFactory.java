@@ -11,6 +11,7 @@ import indi.bookmarkx.action.BookmarkExportAction;
 import indi.bookmarkx.action.BookmarkFlatExportAction;
 import indi.bookmarkx.action.BookmarkFlatImportAction;
 import indi.bookmarkx.action.BookmarkImportAction;
+import indi.bookmarkx.action.BookmarkRefreshAction;
 import indi.bookmarkx.ui.pannel.LogPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,12 +39,13 @@ public class RootWindowFactory implements ToolWindowFactory, DumbAware {
     }
 
     private void initTitleAction(ToolWindow toolWindow) {
+        BookmarkRefreshAction refreshAction = new BookmarkRefreshAction();
         BookmarkExportAction exportAction = new BookmarkExportAction();
         BookmarkFlatExportAction flatExportAction = new BookmarkFlatExportAction();
         BookmarkImportAction importAction = new BookmarkImportAction();
         BookmarkFlatImportAction flatImportAction = new BookmarkFlatImportAction();
 
         // 在 ToolWindow 的标题栏中添加自定义动作按钮
-        toolWindow.setTitleActions(Arrays.asList(importAction, flatImportAction, exportAction, flatExportAction));
+        toolWindow.setTitleActions(Arrays.asList(refreshAction, importAction, flatImportAction, exportAction, flatExportAction));
     }
 }
