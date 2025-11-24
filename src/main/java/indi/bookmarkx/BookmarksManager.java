@@ -222,6 +222,7 @@ public final class BookmarksManager {
         public void run(@NotNull ProgressIndicator indicator) {
             try {
                 MyPersistent persistent = MyPersistent.getInstance(project);
+                persistent.forceReload();
                 BookmarkPO rootPO = persistent.getState();
                 BookmarkTreeNode root = PersistenceUtil.generateTreeNode(rootPO, project);
                 treeModel = new DefaultTreeModel(root);

@@ -241,11 +241,10 @@ public class BookmarkFileWatcher {
             
             // 获取BookmarksManager并重新加载
             BookmarksManager manager = BookmarksManager.getInstance(project);
-            manager.reload();
-            
-            String successMsg = "Bookmarks reloaded successfully";
+            String successMsg = "manager.reload()";
             LOG.info(successMsg);
             LogCollector.getInstance().info("BookmarkFileWatcher", project, successMsg);
+            manager.reload();
         } catch (Exception e) {
             String errorMsg = "Failed to reload bookmarks after file change";
             LOG.error(errorMsg, e);

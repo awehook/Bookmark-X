@@ -31,6 +31,9 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
     private final Project project;
     
     private final BookmarkFileWatcher fileWatcher;
+    
+    // 标志位：是否已从自定义路径加载过
+    private boolean hasLoadedFromCustomPath = false;
 
     public MyPersistent(Project project) {
         this.project = project;
@@ -53,9 +56,6 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
     @Override
     public @NotNull BookmarkPO getState() {
         LOG.info("获取：" + state);
-        
-        // 如果配置了自定义路径，从自定义路径加载
-        loadFromCustomPathIfConfigured();
         
         if (state == null) {
             state = new BookmarkPO();
@@ -123,6 +123,16 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
         if (success) {
             LOG.info("Saved bookmarks to custom path: " + customPath);
         }
+    }
+    
+    /**
+     * 强制重新加载（用于文件监听器检测到外部变更时调用）
+     */
+    public void forceReload() {
+        hasLoadedFromCustomPath = false;
+        loadFromCustomPathIfConfigured();
+        hasLoadedFromCustomPath = true;
+        LOG.info("Forced reload completed for project: " + project.getBasePath());
     }
     
     /**
