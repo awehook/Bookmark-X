@@ -55,6 +55,13 @@ public class LogCollector {
     public void info(String source, Project project, String message) {
         log("INFO", source, project, message);
     }
+
+    /**
+     * 记录INFO级别日志（带项目信息）
+     */
+    public void trace(String source, Project project, String message) {
+        log("TRACE", source, project, message + "\n" + getStackTrace());
+    }
     
     /**
      * 记录ERROR级别日志
@@ -84,6 +91,21 @@ public class LogCollector {
     public void error(String source, Project project, String message, Throwable throwable) {
         String fullMessage = message + "\n" + getStackTrace(throwable);
         log("ERROR", source, project, fullMessage);
+    }
+
+    /**
+     * 获取当前调用堆栈信息
+     *
+     * @return 堆栈跟踪字符串
+     */
+    private static String getStackTrace() {
+        StringBuilder sb = new StringBuilder();
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        // 跳过前两个元素（getStackTrace和当前方法）
+        for (int i = 2; i < stackTrace.length; i++) {
+            sb.append("\n\tat ").append(stackTrace[i].toString());
+        }
+        return sb.toString();
     }
     
     /**

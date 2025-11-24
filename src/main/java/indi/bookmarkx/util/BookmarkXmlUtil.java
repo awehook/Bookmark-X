@@ -51,7 +51,7 @@ public class BookmarkXmlUtil {
             Element rootElement = document.getRootElement();
             msg = "loadFromFile:" + file.getAbsolutePath();
             LOG.info(msg, new Throwable("Stack trace"));
-            LogCollector.getInstance().info("BookmarkXmlUtil", project, msg + "\n" + getStackTrace());
+            LogCollector.getInstance().trace("BookmarkXmlUtil", project, msg);
 
             // 查找component节点
             Element componentElement = null;
@@ -319,20 +319,5 @@ public class BookmarkXmlUtil {
                 }
             }
         }
-    }
-    
-    /**
-     * 获取当前调用堆栈信息
-     * 
-     * @return 堆栈跟踪字符串
-     */
-    private static String getStackTrace() {
-        StringBuilder sb = new StringBuilder();
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        // 跳过前两个元素（getStackTrace和当前方法）
-        for (int i = 2; i < stackTrace.length; i++) {
-            sb.append("\n\tat ").append(stackTrace[i].toString());
-        }
-        return sb.toString();
     }
 }

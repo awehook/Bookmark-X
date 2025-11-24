@@ -20,6 +20,7 @@ import indi.bookmarkx.model.GroupNodeModel;
 import indi.bookmarkx.persistence.MySettings;
 import indi.bookmarkx.ui.dialog.BookmarkCreatorDialog;
 import indi.bookmarkx.ui.pannel.BookmarkTipPanel;
+import indi.bookmarkx.util.LogCollector;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -303,6 +304,7 @@ public class BookmarkTree extends Tree implements BookmarkListener {
 
     @Override
     public void setModel(TreeModel newModel) {
+        LogCollector.getInstance().trace("BookmarkTree", project, "setModel");
         // 保存旧树的展开状态
         Set<String> expandedNodeUuids = saveExpandedState();
         
