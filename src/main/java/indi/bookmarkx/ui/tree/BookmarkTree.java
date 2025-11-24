@@ -622,6 +622,10 @@ public class BookmarkTree extends Tree implements BookmarkListener {
                     }
                 }
                 tree.expandPath(destPath);
+                
+                // 发布书签顺序变化事件
+                tree.project.getMessageBus().syncPublisher(BookmarkListener.TOPIC).bookmarksOrderChanged();
+                
                 return true;
 
             } catch (Exception e) {

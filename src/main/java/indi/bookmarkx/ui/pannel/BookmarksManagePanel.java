@@ -175,6 +175,22 @@ public class BookmarksManagePanel extends JPanel {
             });
         }
 
+        @Override
+        public void bookmarkChanged(@NotNull AbstractTreeNodeModel model) {
+            // 书签内容变化时，立即持久化保存
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                manager.persistentSave();
+            });
+        }
+
+        @Override
+        public void bookmarksOrderChanged() {
+            // 书签顺序变化时，立即持久化保存
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                manager.persistentSave();
+            });
+        }
+
         private void refreshFile(BookmarkNodeModel model) {
             VirtualFile virtualFile = model.getOpenFileDescriptor().getFile();
             PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

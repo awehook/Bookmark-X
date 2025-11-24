@@ -56,11 +56,11 @@ public class LogPanel extends JPanel implements LogCollector.LogListener {
         JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         
         // 清空日志按钮
-        JButton clearButton = new JButton("清空日志");
+        JButton clearButton = new JButton("Clear Log");
         clearButton.addActionListener(e -> clearLogs());
         
         // 自动滚动复选框
-        JCheckBox autoScrollCheckBox = new JCheckBox("自动滚动", true);
+        JCheckBox autoScrollCheckBox = new JCheckBox("Auto Scroll", true);
         autoScrollCheckBox.addActionListener(e -> {
             // 可以在这里添加自动滚动的逻辑
         });
