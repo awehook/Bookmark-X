@@ -45,9 +45,11 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -301,6 +303,9 @@ public class BookmarkTree extends Tree implements BookmarkListener {
 
     @Override
     public void setModel(TreeModel newModel) {
+        // 保存旧树的展开状态
+        Set<String> expandedNodeUuids = saveExpandedState();
+        
         this.model = (DefaultTreeModel) newModel;
         Object root = model.getRoot();
         if (!(root instanceof BookmarkTreeNode)) {
@@ -311,8 +316,67 @@ public class BookmarkTree extends Tree implements BookmarkListener {
         nodeCache.clear();
         loadNodeCache((BookmarkTreeNode) root);
         super.setModel(model);
+        
+        // 恢复展开状态
+        restoreExpandedState(expandedNodeUuids);
     }
 
+    /**
+     * 保存当前树的展开状态
+     * 
+     * @return 展开节点的UUID集合
+     */
+    private Set<String> saveExpandedState() {
+        Set<String> expandedUuids = new HashSet<>();
+        if (model == null) {
+            return expandedUuids;
+        }
+        
+        Object root = model.getRoot();
+        if (!(root instanceof BookmarkTreeNode)) {
+            return expandedUuids;
+        }
+        
+        // 遍历所有行，检查哪些节点是展开的
+        int rowCount = getRowCount();
+        for (int i = 0; i < rowCount; i++) {
+            TreePath path = getPathForRow(i);
+            if (path != null && isExpanded(path)) {
+                BookmarkTreeNode node = (BookmarkTreeNode) path.getLastPathComponent();
+                if (node.isGroup()) {
+                    AbstractTreeNodeModel nodeModel = (AbstractTreeNodeModel) node.getUserObject();
+                    if (nodeModel != null && nodeModel.getUuid() != null) {
+                        expandedUuids.add(nodeModel.getUuid());
+                    }
+                }
+            }
+        }
+        
+        return expandedUuids;
+    }
+    
+    /**
+     * 恢复树的展开状态
+     * 
+     * @param expandedUuids 之前展开节点的UUID集合
+     */
+    private void restoreExpandedState(Set<String> expandedUuids) {
+        if (expandedUuids == null || expandedUuids.isEmpty()) {
+            return;
+        }
+        
+        // 遍历nodeCache，找到对应UUID的节点并展开
+        for (Map.Entry<String, BookmarkTreeNode> entry : nodeCache.entrySet()) {
+            String uuid = entry.getKey();
+            BookmarkTreeNode node = entry.getValue();
+            
+            if (expandedUuids.contains(uuid) && node.isGroup()) {
+                TreePath path = new TreePath(node.getPath());
+                expandPath(path);
+            }
+        }
+    }
+    
     /**
      * 加载当前节点下的所有节点到缓存
      *
@@ -324,6 +388,8 @@ public class BookmarkTree extends Tree implements BookmarkListener {
             nodeCache.put(model.getUuid(), node);
             return;
         }
+        // 分组节点也加入缓存，用于恢复展开状态
+        nodeCache.put(model.getUuid(), node);
         int childCount = node.getChildCount();
         for (int i = 0; i < childCount; i++) {
             loadNodeCache((BookmarkTreeNode) node.getChildAt(i));
