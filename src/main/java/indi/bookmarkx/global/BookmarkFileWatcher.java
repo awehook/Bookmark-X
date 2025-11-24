@@ -30,6 +30,8 @@ public class BookmarkFileWatcher {
     private String watchedFilePath;
     private long lastModifiedTime = 0;
     private final AtomicBoolean isInternalChange = new AtomicBoolean(false); // 标记是否为内部修改
+    private volatile long lastReloadTime = 0; // 上次重新加载的时间
+    private static final long RELOAD_DEBOUNCE_MS = 500; // 防抖时间：500毫秒内的多次变化只处理一次
     
     private WatchService watchService;
     private ExecutorService executorService;
@@ -206,6 +208,16 @@ public class BookmarkFileWatcher {
             return;
         }
         lastModifiedTime = currentModifiedTime;
+
+        // 防抖：如果距离上次重新加载时间太短，忽略本次事件
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastReloadTime < RELOAD_DEBOUNCE_MS) {
+            String debounceMsg = "[BookmarkFileWatcher] Debouncing: ignoring duplicate file change event (within " + RELOAD_DEBOUNCE_MS + "ms)";
+            LOG.info(debounceMsg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, debounceMsg);
+            return;
+        }
+        lastReloadTime = currentTime;
 
         String changeMsg = "[BookmarkFileWatcher] Detected external change to bookmark file: " + watchedFilePath;
         LOG.info(changeMsg);
