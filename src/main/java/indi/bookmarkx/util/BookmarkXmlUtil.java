@@ -12,6 +12,8 @@ import org.jdom.output.XMLOutputter;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 书签XML工具类，用于处理IntelliJ格式的XML文件
@@ -151,6 +153,9 @@ public class BookmarkXmlUtil {
                 }
             }
             
+            // 清理不必要的默认值和空元素
+            cleanupDefaultValues(componentElement);
+            
             // 创建IntelliJ格式的XML文档结构
             Element projectElement = new Element("project");
             projectElement.setAttribute("version", "4");
@@ -250,6 +255,68 @@ public class BookmarkXmlUtil {
         for (Object child : element.getChildren()) {
             if (child instanceof Element) {
                 collapsePathMacros((Element) child, project);
+            }
+        }
+    }
+    
+    /**
+     * 清理XML中的默认值和空元素，减少文件大小
+     * 
+     * @param element XML元素
+     */
+    private static void cleanupDefaultValues(Element element) {
+        if (element == null) {
+            return;
+        }
+        
+        // 先递归处理所有子元素
+        List<Element> children = new ArrayList<>(element.getChildren());
+        for (Element child : children) {
+            cleanupDefaultValues(child);
+        }
+        
+        // 如果是option元素，检查是否需要移除
+        if ("option".equals(element.getName())) {
+            String name = element.getAttributeValue("name");
+            String value = element.getAttributeValue("value");
+            
+            // 移除默认值为false的bookmark属性
+            if ("bookmark".equals(name) && "false".equals(value)) {
+                element.getParentElement().removeContent(element);
+                return;
+            }
+            
+            // 移除默认值为0的index属性
+            if ("index".equals(name) && "0".equals(value)) {
+                element.getParentElement().removeContent(element);
+                return;
+            }
+            
+            // 移除默认值为0的line属性
+            if ("line".equals(name) && "0".equals(value)) {
+                element.getParentElement().removeContent(element);
+                return;
+            }
+            
+            // 移除空字符串值的属性
+            if (value != null && value.isEmpty()) {
+                element.getParentElement().removeContent(element);
+                return;
+            }
+            
+            // 移除没有value属性的option元素（空值）
+            if (value == null && element.getChildren().isEmpty()) {
+                element.getParentElement().removeContent(element);
+                return;
+            }
+            
+            // 移除空的children列表
+            if ("children".equals(name)) {
+                Element listElement = element.getChild("list");
+                if (listElement != null && listElement.getChildren().isEmpty()) {
+                    element.getParentElement().removeContent(element);
+                    return;
+                }
             }
         }
     }
