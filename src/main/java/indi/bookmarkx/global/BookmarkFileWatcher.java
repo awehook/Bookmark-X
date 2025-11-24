@@ -44,13 +44,13 @@ public class BookmarkFileWatcher {
         String customPath = ProjectSettings.getInstance(project).getCustomStoragePath();
         
         if (StringUtils.isBlank(customPath)) {
-            LOG.info("No custom storage path configured, file watcher not started");
+            LOG.info("[BookmarkFileWatcher] No custom storage path configured, file watcher not started");
             return;
         }
 
         // 如果已经在监听同一个文件，不需要重新启动
         if (customPath.equals(watchedFilePath) && connection != null) {
-            LOG.info("Already watching file: " + customPath);
+            LOG.info("[BookmarkFileWatcher] Already watching file: " + customPath);
             return;
         }
 
@@ -78,7 +78,7 @@ public class BookmarkFileWatcher {
             }
         });
 
-        LOG.info("Started watching bookmark file: " + customPath);
+        LOG.info("[BookmarkFileWatcher] Started watching bookmark file: " + customPath);
     }
 
     /**
@@ -124,7 +124,7 @@ public class BookmarkFileWatcher {
         }
         lastModifiedTime = currentModifiedTime;
 
-        LOG.info("Detected external change to bookmark file: " + watchedFilePath);
+        LOG.info("[BookmarkFileWatcher] Detected external change to bookmark file: " + watchedFilePath);
         
         // 重新加载书签
         reloadBookmarks();

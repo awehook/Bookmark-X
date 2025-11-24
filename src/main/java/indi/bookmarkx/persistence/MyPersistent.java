@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Nonoas
@@ -75,6 +76,9 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
      */
     private void loadFromCustomPathIfConfigured() {
         String customPath = ProjectSettings.getInstance(project).getCustomStoragePath();
+        LOG.info(String.format("loadFromCustomPathIfConfigured - Project: %s, Custom Path: %s",
+                project.getBasePath(), customPath));
+
         if (StringUtils.isBlank(customPath)) {
             return;
         }
@@ -88,7 +92,8 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
         BookmarkPO loadedState = BookmarkXmlUtil.loadFromFile(customFile, project);
         if (loadedState != null) {
             this.state = loadedState;
-            LOG.info("Loaded bookmarks from custom path: " + customPath);
+            LOG.info(project.getBasePath() + "Loaded bookmarks from custom path: " + customPath);
+            printStateTree(state);
         }
     }
     
@@ -125,5 +130,56 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
      */
     public BookmarkFileWatcher getFileWatcher() {
         return fileWatcher;
+    }
+    
+    /**
+     * 以树状形式打印书签结构（用于调试）
+     */
+    public void printStateTree(BookmarkPO state) {
+        if (state == null) {
+            LOG.info("State is null");
+            return;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n========== Bookmark Tree ==========\n");
+        printBookmarkNode(state, "", true, sb);
+        sb.append("===================================\n");
+        LOG.info(sb.toString());
+    }
+    
+    /**
+     * 递归打印书签节点
+     * @param node 当前节点
+     * @param prefix 前缀（用于缩进）
+     * @param isLast 是否是最后一个子节点
+     * @param sb 字符串构建器
+     */
+    private void printBookmarkNode(BookmarkPO node, String prefix, boolean isLast, StringBuilder sb) {
+        if (node == null) {
+            return;
+        }
+        
+        // 打印当前节点
+        sb.append(prefix);
+        sb.append(isLast ? "└── " : "├── ");
+        
+        // 如果是分组，添加[g]标记
+        if (!node.isBookmark()) {
+            sb.append("[g] ");
+        }
+        
+        sb.append(node.getName());
+        sb.append("\n");
+        
+        // 递归打印子节点
+        List<BookmarkPO> children = node.getChildren();
+        if (children != null && !children.isEmpty()) {
+            for (int i = 0; i < children.size(); i++) {
+                boolean isLastChild = (i == children.size() - 1);
+                String childPrefix = prefix + (isLast ? "    " : "│   ");
+                printBookmarkNode(children.get(i), childPrefix, isLastChild, sb);
+            }
+        }
     }
 }

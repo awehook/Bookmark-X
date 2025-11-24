@@ -43,12 +43,13 @@ public class BookmarkXmlUtil {
             SAXBuilder saxBuilder = new SAXBuilder();
             Document document = saxBuilder.build(file);
             Element rootElement = document.getRootElement();
-            
+            LOG.info("Root element name: " + rootElement.getName());
             // 查找component节点
             Element componentElement = null;
             for (Object obj : rootElement.getChildren("component")) {
                 Element component = (Element) obj;
                 String name = component.getAttributeValue("name");
+                LOG.info("Foreach element with name: " + name);
                 
                 if (COMPONENT_NAME.equals(name)) {
                     componentElement = component;
