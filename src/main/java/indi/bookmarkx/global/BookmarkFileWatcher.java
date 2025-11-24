@@ -47,7 +47,7 @@ public class BookmarkFileWatcher {
         if (StringUtils.isBlank(customPath)) {
             String msg = "[BookmarkFileWatcher] No custom storage path configured, file watcher not started";
             LOG.info(msg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", msg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, msg);
             return;
         }
 
@@ -55,7 +55,7 @@ public class BookmarkFileWatcher {
         if (customPath.equals(watchedFilePath) && connection != null) {
             String alreadyWatchingMsg = "[BookmarkFileWatcher] Already watching file: " + customPath;
             LOG.info(alreadyWatchingMsg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", alreadyWatchingMsg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, alreadyWatchingMsg);
             return;
         }
 
@@ -85,7 +85,7 @@ public class BookmarkFileWatcher {
 
         String startedMsg = "[BookmarkFileWatcher] Started watching bookmark file: " + customPath;
         LOG.info(startedMsg);
-        LogCollector.getInstance().info("BookmarkFileWatcher", startedMsg);
+        LogCollector.getInstance().info("BookmarkFileWatcher", project, startedMsg);
     }
 
     /**
@@ -97,7 +97,7 @@ public class BookmarkFileWatcher {
             connection = null;
             String msg = "Stopped watching bookmark file: " + watchedFilePath;
             LOG.info(msg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", msg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, msg);
         }
         watchedFilePath = null;
     }
@@ -122,7 +122,7 @@ public class BookmarkFileWatcher {
         if (isInternalChange) {
             String ignoreMsg = "Ignoring internal change to bookmark file";
             LOG.info(ignoreMsg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", ignoreMsg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, ignoreMsg);
             isInternalChange = false;
             return;
         }
@@ -137,7 +137,7 @@ public class BookmarkFileWatcher {
 
         String changeMsg = "[BookmarkFileWatcher] Detected external change to bookmark file: " + watchedFilePath;
         LOG.info(changeMsg);
-        LogCollector.getInstance().info("BookmarkFileWatcher", changeMsg);
+        LogCollector.getInstance().info("BookmarkFileWatcher", project, changeMsg);
         
         // 重新加载书签
         reloadBookmarks();
@@ -165,7 +165,7 @@ public class BookmarkFileWatcher {
         try {
             String msg = "Reloading bookmarks from external file change...";
             LOG.info(msg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", msg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, msg);
             
             // 获取BookmarksManager并重新加载
             BookmarksManager manager = BookmarksManager.getInstance(project);
@@ -173,11 +173,11 @@ public class BookmarkFileWatcher {
             
             String successMsg = "Bookmarks reloaded successfully";
             LOG.info(successMsg);
-            LogCollector.getInstance().info("BookmarkFileWatcher", successMsg);
+            LogCollector.getInstance().info("BookmarkFileWatcher", project, successMsg);
         } catch (Exception e) {
             String errorMsg = "Failed to reload bookmarks after file change";
             LOG.error(errorMsg, e);
-            LogCollector.getInstance().error("BookmarkFileWatcher", errorMsg, e);
+            LogCollector.getInstance().error("BookmarkFileWatcher", project, errorMsg, e);
         }
     }
 

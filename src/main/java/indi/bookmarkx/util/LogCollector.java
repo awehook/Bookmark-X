@@ -1,6 +1,7 @@
 package indi.bookmarkx.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -45,14 +46,28 @@ public class LogCollector {
      * 记录INFO级别日志
      */
     public void info(String source, String message) {
-        log("INFO", source, message);
+        log("INFO", source, null, message);
+    }
+    
+    /**
+     * 记录INFO级别日志（带项目信息）
+     */
+    public void info(String source, Project project, String message) {
+        log("INFO", source, project, message);
     }
     
     /**
      * 记录ERROR级别日志
      */
     public void error(String source, String message) {
-        log("ERROR", source, message);
+        log("ERROR", source, null, message);
+    }
+    
+    /**
+     * 记录ERROR级别日志（带项目信息）
+     */
+    public void error(String source, Project project, String message) {
+        log("ERROR", source, project, message);
     }
     
     /**
@@ -60,15 +75,29 @@ public class LogCollector {
      */
     public void error(String source, String message, Throwable throwable) {
         String fullMessage = message + "\n" + getStackTrace(throwable);
-        log("ERROR", source, fullMessage);
+        log("ERROR", source, null, fullMessage);
+    }
+    
+    /**
+     * 记录ERROR级别日志（带项目信息和异常）
+     */
+    public void error(String source, Project project, String message, Throwable throwable) {
+        String fullMessage = message + "\n" + getStackTrace(throwable);
+        log("ERROR", source, project, fullMessage);
     }
     
     /**
      * 记录日志并通知所有监听器
      */
-    private void log(String level, String source, String message) {
+    private void log(String level, String source, Project project, String message) {
         String timestamp = dateFormat.format(new Date());
-        String formattedLog = String.format("[%s] [%s] [%s] %s", timestamp, level, source, message);
+        String projectInfo = "";
+        
+        if (project != null && project.getBasePath() != null) {
+            projectInfo = "[" + project.getBasePath() + "] ";
+        }
+        
+        String formattedLog = String.format("[%s] [%s] [%s] %s%s", timestamp, level, source, projectInfo, message);
         
         // 在EDT线程中通知监听器
         ApplicationManager.getApplication().invokeLater(() -> {
