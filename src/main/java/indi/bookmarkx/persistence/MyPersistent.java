@@ -93,7 +93,7 @@ public class MyPersistent implements PersistentStateComponent<BookmarkPO> {
         if (loadedState != null) {
             this.state = loadedState;
             LOG.info(project.getBasePath() + "Loaded bookmarks from custom path: " + customPath);
-            printStateTree(state);
+            // printStateTree(state);
         }
     }
     

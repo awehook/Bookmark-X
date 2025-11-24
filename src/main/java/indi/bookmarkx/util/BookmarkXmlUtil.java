@@ -44,12 +44,12 @@ public class BookmarkXmlUtil {
             Document document = saxBuilder.build(file);
             Element rootElement = document.getRootElement();
             LOG.info("Root element name: " + rootElement.getName());
+
             // 查找component节点
             Element componentElement = null;
             for (Object obj : rootElement.getChildren("component")) {
                 Element component = (Element) obj;
                 String name = component.getAttributeValue("name");
-                LOG.info("Foreach element with name: " + name);
                 
                 if (COMPONENT_NAME.equals(name)) {
                     componentElement = component;
@@ -114,6 +114,8 @@ public class BookmarkXmlUtil {
             
             // 使用IntelliJ的XmlSerializer序列化BookmarkPO
             Element componentElement = XmlSerializer.serialize(bookmarkPO);
+            // 将元素名称从类名(BookmarkPO)改为component，以符合IntelliJ格式
+            componentElement.setName("component");
             componentElement.setAttribute("name", COMPONENT_NAME);
             
             // 折叠路径宏（实际路径 -> $PROJECT_DIR$）
