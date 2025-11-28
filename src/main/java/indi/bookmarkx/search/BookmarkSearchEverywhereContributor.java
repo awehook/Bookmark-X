@@ -61,6 +61,11 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
     }
 
     @Override
+    public boolean isShownInSeparateTab() {
+        return true; // 显示为独立的标签页
+    }
+
+    @Override
     public void fetchElements(@NotNull String pattern,
                               @NotNull ProgressIndicator progressIndicator,
                               @NotNull Processor<? super BookmarkSearchItem> consumer) {
