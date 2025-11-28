@@ -105,7 +105,7 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
     }
 
     /**
-     * 递归收集书签
+     * 递归收集书签和分组
      */
     private void collectBookmarksRecursively(BookmarkPO node, List<BookmarkSearchItem> result, String parentPath) {
         if (node == null) {
@@ -114,7 +114,7 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
 
         String currentPath = parentPath.isEmpty() ? node.getName() : parentPath + " > " + node.getName();
 
-        // 如果是书签（不是分组），添加到结果中
+        // 如果是书签，添加到结果中
         if (node.isBookmark()) {
             result.add(new BookmarkSearchItem(
                     node.getUuid(),
@@ -122,8 +122,22 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
                     node.getDesc(),
                     node.getVirtualFilePath(),
                     node.getLine(),
-                    parentPath
+                    parentPath,
+                    false // 不是分组
             ));
+        } else {
+            // 如果是分组，也添加到结果中（但跳过根节点）
+            if (!parentPath.isEmpty()) { // 不添加根节点
+                result.add(new BookmarkSearchItem(
+                        node.getUuid(),
+                        node.getName(),
+                        node.getDesc(),
+                        null, // 分组没有文件路径
+                        0,    // 分组没有行号
+                        parentPath,
+                        true  // 是分组
+                ));
+            }
         }
 
         // 递归处理子节点
@@ -194,7 +208,7 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
     @NotNull
     @Override
     public String getAdvertisement() {
-        return "Search for bookmarks by name, description, or file path";
+        return "Search for bookmarks and groups by name, description, or file path";
     }
 
     @NotNull
@@ -216,21 +230,27 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
         }
 
         try {
-            // 通过 UUID 在树中定位书签
+            // 通过 UUID 在树中定位书签或分组
             BookmarksManager manager = BookmarksManager.getInstance(project);
             BookmarkTree tree = manager.getToolWindowRootPanel().tree();
             
-            // 创建一个临时的BookmarkNodeModel用于查找
+            // 直接通过UUID从nodeCache获取节点（分组和书签都会被缓存）
             BookmarkNodeModel tempModel = new BookmarkNodeModel();
             tempModel.setUuid(selected.getUuid());
-            
-            // 通过UUID从树的缓存中获取节点
             BookmarkTreeNode node = tree.getNodeByModel(tempModel);
-            if (node != null && node.getUserObject() instanceof BookmarkNodeModel) {
-                BookmarkNodeModel bookmarkModel = (BookmarkNodeModel) node.getUserObject();
-                
-                // 在树中定位并选中书签
-                manager.getToolWindowRootPanel().locateBookmark(bookmarkModel);
+            
+            if (node != null && node.getUserObject() != null) {
+                if (selected.isGroup()) {
+                    // 如果是分组，直接在树中选中并展开
+                    javax.swing.tree.TreePath treePath = new javax.swing.tree.TreePath(node.getPath());
+                    tree.setSelectionPath(treePath);
+                    tree.scrollPathToVisible(treePath);
+                    tree.expandPath(treePath);
+                } else {
+                    // 如果是书签，使用原有的定位逻辑
+                    BookmarkNodeModel bookmarkModel = (BookmarkNodeModel) node.getUserObject();
+                    manager.getToolWindowRootPanel().locateBookmark(bookmarkModel);
+                }
                 
                 // 激活工具窗口，确保用户能看到定位结果
                 ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
@@ -244,7 +264,7 @@ public class BookmarkSearchEverywhereContributor implements SearchEverywhereCont
             
             return false;
         } catch (Exception e) {
-            LOG.error("Failed to navigate to bookmark", e);
+            LOG.error("Failed to navigate to bookmark or group", e);
             return false;
         }
     }

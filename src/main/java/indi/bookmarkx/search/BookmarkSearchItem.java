@@ -14,14 +14,16 @@ public class BookmarkSearchItem {
     private final String filePath;
     private final int line;
     private final String groupPath; // 分组路径，如 "group1 > group2"
+    private final boolean isGroup; // 是否是分组
 
-    public BookmarkSearchItem(String uuid, String name, String description, String filePath, int line, String groupPath) {
+    public BookmarkSearchItem(String uuid, String name, String description, String filePath, int line, String groupPath, boolean isGroup) {
         this.uuid = uuid;
         this.name = name;
         this.description = description;
         this.filePath = filePath;
         this.line = line;
         this.groupPath = groupPath;
+        this.isGroup = isGroup;
     }
 
     public String getUuid() {
@@ -46,6 +48,10 @@ public class BookmarkSearchItem {
 
     public String getGroupPath() {
         return groupPath;
+    }
+
+    public boolean isGroup() {
+        return isGroup;
     }
 
     @Override

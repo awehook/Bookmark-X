@@ -1,5 +1,6 @@
 package indi.bookmarkx.search;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import indi.bookmarkx.common.MyIcons;
@@ -25,10 +26,14 @@ public class BookmarkSearchItemRenderer extends ColoredListCellRenderer<Bookmark
             return;
         }
 
-        // 设置图标
-        setIcon(MyIcons.BOOKMARK);
+        // 根据是否是分组设置不同的图标
+        if (value.isGroup()) {
+            setIcon(AllIcons.Nodes.Folder);
+        } else {
+            setIcon(MyIcons.BOOKMARK);
+        }
 
-        // 显示书签名称
+        // 显示名称
         append(value.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
         // 显示描述（如果有）
@@ -36,8 +41,8 @@ public class BookmarkSearchItemRenderer extends ColoredListCellRenderer<Bookmark
             append(" - " + value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
 
-        // 显示文件路径和行号
-        if (value.getFilePath() != null) {
+        // 如果是书签，显示文件路径和行号
+        if (!value.isGroup() && value.getFilePath() != null) {
             String fileName = extractFileName(value.getFilePath());
             String locationText = " (" + fileName + ":" + value.getLine() + ")";
             append(locationText, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
