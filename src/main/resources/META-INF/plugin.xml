@@ -41,6 +41,7 @@
         <applicationConfigurable instance="indi.bookmarkx.MySettingsConfigurable"/>
         <projectConfigurable instance="indi.bookmarkx.ProjectSettingsConfigurable"/>
 
+        <searchEverywhereContributor implementation="indi.bookmarkx.search.BookmarkSearchEverywhereContributor$Factory"/>
 
     </extensions>
 
