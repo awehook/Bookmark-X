@@ -143,6 +143,19 @@ public class BookmarksManagePanel extends JPanel {
     }
 
     /**
+     * 定位到指定的书签，在树中选中并展开
+     *
+     * @param bookmarkModel 要定位的书签模型
+     */
+    public void locateBookmark(BookmarkNodeModel bookmarkModel) {
+        if (!treeLoaded) {
+            LOG.warn("Tree not loaded yet, cannot locate bookmark");
+            return;
+        }
+        tree.locateAndSelectBookmark(bookmarkModel);
+    }
+
+    /**
      * 创建一个属于项目 project 的标签管理面板
      *
      * @param project 项目

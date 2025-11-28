@@ -297,6 +297,44 @@ public class BookmarkTree extends Tree implements BookmarkListener {
         return nodeCache.get(uuid);
     }
 
+    /**
+     * 定位到指定的书签节点，选中它，展开其所在的层级，并滚动到可见位置
+     *
+     * @param bookmarkModel 要定位的书签模型
+     */
+    public void locateAndSelectBookmark(BookmarkNodeModel bookmarkModel) {
+        if (bookmarkModel == null) {
+            return;
+        }
+        
+        // 从缓存中获取节点
+        BookmarkTreeNode node = getNodeByModel(bookmarkModel);
+        if (node == null) {
+            log.warn("Cannot locate bookmark: node not found in cache for UUID: " + bookmarkModel.getUuid());
+            return;
+        }
+        
+        // 获取节点路径
+        TreePath treePath = new TreePath(node.getPath());
+        
+        // 展开父节点路径（确保所有祖先节点都展开）
+        TreePath parentPath = treePath.getParentPath();
+        if (parentPath != null) {
+            expandPath(parentPath);
+        }
+        
+        // 选中节点
+        setSelectionPath(treePath);
+        
+        // 滚动到可见位置
+        scrollPathToVisible(treePath);
+        
+        // 激活书签（更新导航器状态）
+        navigator.activeBookmark(node);
+        
+        LogCollector.getInstance().trace("BookmarkTree", project, "Located and selected bookmark: " + bookmarkModel.getName());
+    }
+
     private void addToCache(BookmarkTreeNode node) {
         AbstractTreeNodeModel userObject = (AbstractTreeNodeModel) node.getUserObject();
         nodeCache.put(userObject.getUuid(), node);
